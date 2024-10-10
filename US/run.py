@@ -27,7 +27,7 @@ def parse_request():
         print("requested fib url")
         return response.json(), response.status_code
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 400
 
 
 def query_auth(hn, as_ip, as_port):

@@ -2,18 +2,19 @@ import socket
 import os
 
 dns_records = {}
-DNS_FILE_NAME = 'dns.txt'
+DNS_FILE_NAME = "dns.txt"
+
 
 def find_record_in_file(name):
     try:
         if os.path.exists(DNS_FILE_NAME):
-            with open(DNS_FILE_NAME, 'r') as file:
-                lines=file.readlines()
+            with open(DNS_FILE_NAME, "r") as file:
+                lines = file.readlines()
                 for line in lines:
-                    parts=line.split(',')
-                    if len(parts)==4:
+                    parts = line.split(",")
+                    if len(parts) == 4:
                         record_type, hostname, ip_address, ttl = parts
-                        if record_type=="A" and name==hostname:
+                        if record_type == "A" and name == hostname:
                             return f"TYPE=A\nNAME={name}\nVALUE={ip_address}\nTTL={ttl}"
             return "200"
         else:
@@ -31,8 +32,21 @@ def register_data(data):
         ip_address = lines[2].split("=")[1]
         ttl = int(lines[3].split("=")[1])
         if record_type == "A":
-            with open(DNS_FILE_NAME, 'a') as file:
-                file.write(f"A,{hostname},{ip_address},{ttl}\n")
+            with open(DNS_FILE_NAME, "r") as file:
+                records = file.readlines()
+            updated_records = []
+            exists = False
+            for r in records:
+                parts = r.strip().split(",")
+                if len(parts) == 4 and parts[1] == hostname:
+                    updated_records.append(f"A,{hostname},{ip_address},{ttl}\n")
+                    exists = True
+                else:
+                    updated_records.append(r)
+            if not exists:
+                updated_records.append(f"A,{hostname},{ip_address},{ttl}\n")
+            with open(DNS_FILE_NAME, "w") as file:
+                file.writelines(updated_records)
             return "201: Record created successfully"
         return "400: Invalid record type"
     except Exception as e:
@@ -41,11 +55,11 @@ def register_data(data):
 
 
 def handle_query(data):
-    lines=data.splitlines()
+    lines = data.splitlines()
     try:
-        record_type=lines[0].split("=")[1]
-        hostname=lines[1].split("=")[1]
-        if record_type== "A":
+        record_type = lines[0].split("=")[1]
+        hostname = lines[1].split("=")[1]
+        if record_type == "A":
             return find_record_in_file(hostname)
         else:
             return "400: Invalid record type"
